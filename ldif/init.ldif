@@ -1,0 +1,20 @@
+dn: dc=DOMAIN,dc=TLD
+objectClass: organization
+objectClass: dcObject
+dc: DC
+o: O
+
+dn: ou=user,dc=DOMAIN,dc=TLD
+objectClass: top
+objectClass: organizationalUnit
+ou: user
+
+dn: ou=group,dc=DOMAIN,dc=TLD
+objectClass: top
+objectClass: organizationalUnit
+ou: group
+
+dn: ou=service,dc=DOMAIN,dc=TLD
+objectClass: top
+objectClass: organizationalUnit
+ou: service
