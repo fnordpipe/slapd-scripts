@@ -2,15 +2,22 @@
 
 # Copyright (c) 2017 crito <crito@fnordpipe.org>
 
-"""Usage:   slappy CMD
+"""Usage:   slap.py
 
-Process actions to setup ldap server
+initialize an empty ldap server
 
-Arguments:
-    CMD     select action to trigger
-
-Commands:
-    init    initialize empty base dn with user, group and service organizational unit
+Example:
+   URL: ldap://ldap.example.org:389/
+   Base DN: dc=example,dc=org
+   Username: root
+   Password:
+   DC Name: example
+   Organization: example organization
+   # ldap: add entry: dc=example,dc=org
+   # ldap: add entry: ou=user,dc=example,dc=org
+   # ldap: add entry: ou=group,dc=example,dc=org
+   # ldap: add entry: ou=service,dc=example,dc=org
+   # ldap: add entry: cn=root,dc=example,dc=org
 
 """
 
@@ -24,16 +31,21 @@ class slappy:
     host = None
     username = None
     password = None
+    baseDn = None
+
+    def add(self, attrs):
+        print('# ldap: add entry: %s' % (attrs['dn']))
+        ldif = modlist.addModlist(attrs['attrs'])
+        self.ldapConn.add_s(attrs['dn'], ldif)
 
     def init(self):
-        baseDn = raw_input('Base DN: ')
-        dc = raw_input('DC: ')
+        dc = raw_input('DC Name: ')
         o = raw_input('Organization: ')
 
         # base dn
         attrsList = []
         attrsList.append({ 'attrs': {} })
-        attrsList[0]['dn'] = baseDn
+        attrsList[0]['dn'] = self.baseDn
         attrsList[0]['attrs']['objectclass'] = [
             'organization',
             'dcObject'
@@ -43,7 +55,7 @@ class slappy:
 
         # user dn
         attrsList.append({ 'attrs': {} })
-        attrsList[1]['dn'] = 'ou=user,%s' % (baseDn)
+        attrsList[1]['dn'] = 'ou=user,%s' % (self.baseDn)
         attrsList[1]['attrs']['objectclass'] = [
             'top',
             'organizationalUnit'
@@ -52,7 +64,7 @@ class slappy:
 
         # group dn
         attrsList.append({ 'attrs': {} })
-        attrsList[2]['dn'] = 'ou=group,%s' % (baseDn)
+        attrsList[2]['dn'] = 'ou=group,%s' % (self.baseDn)
         attrsList[2]['attrs']['objectclass'] = [
             'top',
             'organizationalUnit'
@@ -61,7 +73,7 @@ class slappy:
 
         # service dn
         attrsList.append({ 'attrs': {} })
-        attrsList[3]['dn'] = 'ou=service,%s' % (baseDn)
+        attrsList[3]['dn'] = 'ou=service,%s' % (self.baseDn)
         attrsList[3]['attrs']['objectclass'] = [
             'top',
             'organizationalUnit'
@@ -69,25 +81,37 @@ class slappy:
         attrsList[3]['attrs']['ou'] = 'service'
 
         for attrs in attrsList:
-            print('adding entry: %s' % (attrs['dn']))
-            ldif = modlist.addModlist(attrs['attrs'])
-            self.ldapConn.add_s(attrs['dn'], ldif)
+            self.add(attrs)
+
+    def root(self):
+        # base dn root
+        attrsList = []
+        attrsList.append({ 'attrs': {} })
+        attrsList[0]['dn'] = 'cn=root,%s' % self.baseDn
+        attrsList[0]['attrs']['objectclass'] = [
+            'organizationalRole'
+        ]
+        attrsList[0]['attrs']['cn'] = 'root'
+        attrsList[0]['attrs']['description'] = 'root dn user'
+
+        self.add(attrsList[0])
 
     def run(self):
         args = docopt.docopt(__doc__)
 
         self.host = raw_input('URL: ')
+        self.baseDn = raw_input('Base DN: ')
         self.username = raw_input('Username: ')
         self.password = getpass.getpass('Password: ')
 
         try:
             self.ldapConn = ldap.initialize(self.host)
-            self.ldapConn.simple_bind_s(self.username, self.password)
+            self.ldapConn.simple_bind_s('cn=%s,%s' % (self.username, self.baseDn), self.password)
         except ldap.LDAPError as e:
             print(e)
 
-        if args['CMD'] == 'init':
-            self.init()
+        self.init()
+        self.root()
 
         self.ldapConn.unbind_s()
 
