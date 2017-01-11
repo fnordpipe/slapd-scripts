@@ -40,7 +40,7 @@ class slappy:
         ldif = modlist.addModlist(attrs['attrs'])
         self.ldapConn.add_s(attrs['dn'], ldif)
 
-    def init(self):
+    def createBaseDn(self):
         # base dn
         attrsList = []
         attrsList.append({ 'attrs': {} })
@@ -82,18 +82,17 @@ class slappy:
         for attrs in attrsList:
             self.add(attrs)
 
-    def root(self):
+    def createRootUser(self):
         # base dn root
-        attrsList = []
-        attrsList.append({ 'attrs': {} })
-        attrsList[0]['dn'] = 'cn=root,%s' % self.baseDn
-        attrsList[0]['attrs']['objectclass'] = [
+        attrs = { 'attrs': {} }
+        attrs['dn'] = 'cn=root,%s' % self.baseDn
+        attrs['attrs']['objectclass'] = [
             'organizationalRole'
         ]
-        attrsList[0]['attrs']['cn'] = 'root'
-        attrsList[0]['attrs']['description'] = 'root dn user'
+        attrs['attrs']['cn'] = 'root'
+        attrs['attrs']['description'] = 'root dn user'
 
-        self.add(attrsList[0])
+        self.add(attrs)
 
     def run(self):
         args = docopt.docopt(__doc__)
@@ -111,8 +110,8 @@ class slappy:
         except ldap.LDAPError as e:
             print(e)
 
-        self.init()
-        self.root()
+        self.createBaseDn()
+        self.createRootUser()
 
         self.ldapConn.unbind_s()
 
