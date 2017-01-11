@@ -10,7 +10,7 @@ Arguments:
     CMD     select action to trigger
 
 Commands:
-    init    initialize empty base dn
+    init    initialize empty base dn with user, group and service organizational unit
 
 """
 
@@ -26,27 +26,59 @@ class slappy:
     password = None
 
     def init(self):
-        dn = raw_input('base-dn: ')
-        dc = raw_input('dc: ')
-        o = raw_input('organization: ')
+        baseDn = raw_input('Base DN: ')
+        dc = raw_input('DC: ')
+        o = raw_input('Organization: ')
 
-        attrs = {}
-        attrs['objectclass'] = [
+        # base dn
+        attrsList = []
+        attrsList.append({ 'attrs': {} })
+        attrsList[0]['dn'] = baseDn
+        attrsList[0]['attrs']['objectclass'] = [
             'organization',
             'dcObject'
         ]
-        attrs['dc'] = dc
-        attrs['o'] = o
+        attrsList[0]['attrs']['dc'] = dc
+        attrsList[0]['attrs']['o'] = o
 
-        ldif = modlist.addModlist(attrs)
-        self.ldapConn.add_s(dn, ldif)
+        # user dn
+        attrsList.append({ 'attrs': {} })
+        attrsList[1]['dn'] = 'ou=user,%s' % (baseDn)
+        attrsList[1]['attrs']['objectclass'] = [
+            'top',
+            'organizationalUnit'
+        ]
+        attrsList[1]['attrs']['ou'] = 'user'
+
+        # group dn
+        attrsList.append({ 'attrs': {} })
+        attrsList[2]['dn'] = 'ou=group,%s' % (baseDn)
+        attrsList[2]['attrs']['objectclass'] = [
+            'top',
+            'organizationalUnit'
+        ]
+        attrsList[2]['attrs']['ou'] = 'group'
+
+        # service dn
+        attrsList.append({ 'attrs': {} })
+        attrsList[3]['dn'] = 'ou=service,%s' % (baseDn)
+        attrsList[3]['attrs']['objectclass'] = [
+            'top',
+            'organizationalUnit'
+        ]
+        attrsList[3]['attrs']['ou'] = 'service'
+
+        for attrs in attrsList:
+            print('adding entry: %s' % (attrs['dn']))
+            ldif = modlist.addModlist(attrs['attrs'])
+            self.ldapConn.add_s(attrs['dn'], ldif)
 
     def run(self):
         args = docopt.docopt(__doc__)
 
-        self.host = raw_input('url: ')
-        self.username = raw_input('username: ')
-        self.password = getpass.getpass('password: ')
+        self.host = raw_input('URL: ')
+        self.username = raw_input('Username: ')
+        self.password = getpass.getpass('Password: ')
 
         try:
             self.ldapConn = ldap.initialize(self.host)
@@ -60,4 +92,7 @@ class slappy:
         self.ldapConn.unbind_s()
 
 if __name__ == '__main__':
-    slappy().run()
+    try:
+        slappy().run()
+    except KeyboardInterrupt as e:
+        print('\nInterrupted by User')
