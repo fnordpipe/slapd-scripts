@@ -32,6 +32,8 @@ class slappy:
     username = None
     password = None
     baseDn = None
+    dc = None
+    o = None
 
     def add(self, attrs):
         print('# ldap: add entry: %s' % (attrs['dn']))
@@ -39,9 +41,6 @@ class slappy:
         self.ldapConn.add_s(attrs['dn'], ldif)
 
     def init(self):
-        dc = raw_input('DC Name: ')
-        o = raw_input('Organization: ')
-
         # base dn
         attrsList = []
         attrsList.append({ 'attrs': {} })
@@ -50,8 +49,8 @@ class slappy:
             'organization',
             'dcObject'
         ]
-        attrsList[0]['attrs']['dc'] = dc
-        attrsList[0]['attrs']['o'] = o
+        attrsList[0]['attrs']['dc'] = self.dc
+        attrsList[0]['attrs']['o'] = self.o
 
         # user dn
         attrsList.append({ 'attrs': {} })
@@ -103,6 +102,8 @@ class slappy:
         self.baseDn = raw_input('Base DN: ')
         self.username = raw_input('Username: ')
         self.password = getpass.getpass('Password: ')
+        self.dc = raw_input('DC Name: ')
+        self.o = raw_input('Organization: ')
 
         try:
             self.ldapConn = ldap.initialize(self.host)
