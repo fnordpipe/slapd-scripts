@@ -2,9 +2,12 @@
 
 # Copyright (c) 2017 crito <crito@fnordpipe.org>
 
-"""Usage:   slap.py
+"""Usage:   slap.py [-v]
 
 initialize an empty ldap server
+
+Options:
+    -v  Verbose
 
 Example:
    URL: ldap://ldap.example.org:389/
@@ -34,9 +37,12 @@ class slappy:
     baseDn = None
     dc = None
     o = None
+    verbose = False
 
     def add(self, attrs):
-        print('# ldap: add entry: %s' % (attrs['dn']))
+        if self.verbose == True:
+            print('# ldap: add entry: %s' % (attrs['dn']))
+
         ldif = modlist.addModlist(attrs['attrs'])
         self.ldapConn.add_s(attrs['dn'], ldif)
 
@@ -103,6 +109,9 @@ class slappy:
         self.password = getpass.getpass('Password: ')
         self.dc = raw_input('DC Name: ')
         self.o = raw_input('Organization: ')
+
+        if args['-v'] == True:
+            self.verbose = True
 
         try:
             self.ldapConn = ldap.initialize(self.host)
