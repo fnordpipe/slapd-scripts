@@ -114,6 +114,7 @@ class slappy:
             self.verbose = True
 
         try:
+            ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, '/etc/ssl/certs/ca-certificates.crt')
             self.ldapConn = ldap.initialize(self.host)
             self.ldapConn.simple_bind_s('cn=%s,%s' % (self.username, self.baseDn), self.password)
         except ldap.LDAPError as e:
