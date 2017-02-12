@@ -3,7 +3,7 @@
 # Copyright (c) 2017 crito <crito@fnordpipe.org>
 
 """Usage:
-  slap.py <command> [-v]
+    slap.py <command> [-v]
 
 initialize an empty ldap server
 
@@ -16,18 +16,18 @@ Commands:
     user    create an user and correlating group
 
 Example:
-   > slap.py init -v
-   URL: ldap://ldap.example.org:389/
-   Base DN: dc=example,dc=org
-   Username: root
-   Password:
-   DC Name: example
-   Organization: example organization
-   # ldap: add entry: dc=example,dc=org
-   # ldap: add entry: ou=user,dc=example,dc=org
-   # ldap: add entry: ou=group,dc=example,dc=org
-   # ldap: add entry: ou=service,dc=example,dc=org
-   # ldap: add entry: cn=root,dc=example,dc=org
+    > slap.py init -v
+    URL: ldap://ldap.example.org:389/
+    Base DN: dc=example,dc=org
+    Username: root
+    Password:
+    DC Name: example
+    Organization: example organization
+    # ldap: add entry: dc=example,dc=org
+    # ldap: add entry: ou=user,dc=example,dc=org
+    # ldap: add entry: ou=group,dc=example,dc=org
+    # ldap: add entry: ou=service,dc=example,dc=org
+    # ldap: add entry: cn=root,dc=example,dc=org
 
 """
 
