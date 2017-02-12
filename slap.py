@@ -10,6 +10,11 @@ initialize an empty ldap server
 Options:
     -v  Verbose
 
+Commands:
+    init    initialize an empty directory
+    service create a service user
+    user    create an user and correlating group
+
 Example:
    > slap.py init -v
    URL: ldap://ldap.example.org:389/
@@ -92,6 +97,18 @@ class slappy:
         for attrs in attrsList:
             self.add(attrs)
 
+    def createGroup(self, cn, gidNumber):
+        attrs = { 'attrs': {} }
+        attrs['dn'] = 'cn=%s,ou=group,%s' % (cn, self.baseDn)
+        attrs['attrs']['objectclass'] = [
+            'top',
+            'posixGroup'
+        ]
+        attrs['attrs']['cn'] = cn
+        attrs['attrs']['gidNumber'] = gidNumber
+
+        self.add(attrs)
+
     def createRootUser(self):
         # base dn root
         attrs = { 'attrs': {} }
@@ -115,6 +132,30 @@ class slappy:
         attrs['attrs']['cn'] = cn
         attrs['attrs']['uid'] = cn
         attrs['attrs']['userPassword'] = '{CRYPT}%s' % (crypt.crypt(password, bcrypt.gensalt()))
+
+        self.add(attrs)
+
+    def createUser(self, uid, mail, uidNumber, givenName, sn, password):
+        attrs = { 'attrs': {} }
+        attrs['dn'] = 'uid=%s,ou=user,%s' % (uid, self.baseDn)
+        attrs['attrs']['objectclass'] = [
+            'top',
+            'organizationalPerson',
+            'inetOrgPerson',
+            'person',
+            'posixAccount',
+            'shadowAccount'
+        ]
+        attrs['attrs']['cn'] = '%s %s' % (givenName, sn)
+        attrs['attrs']['mail'] = mail
+        attrs['attrs']['gidNumber'] = uidNumber
+        attrs['attrs']['givenName'] = givenName
+        attrs['attrs']['homeDirectory'] = '/home/%s' % uid
+        attrs['attrs']['loginShell'] = '/bin/bash'
+        attrs['attrs']['userPassword'] = '{CRYPT}%s' % (crypt.crypt(password, bcrypt.gensalt()))
+        attrs['attrs']['sn'] = sn
+        attrs['attrs']['uidNumber'] = uidNumber
+        attrs['attrs']['uid'] = uid
 
         self.add(attrs)
 
@@ -146,7 +187,19 @@ class slappy:
         if args['<command>'] == 'service':
             cnService = raw_input('CN Name: ')
             passwordService = getpass.getpass('Password: ')
+
             self.createService(cnService, passwordService)
+
+        if args['<command>'] == 'user':
+            uidUser = raw_input('Username: ')
+            uidNumberUser = raw_input('uidNumber: ')
+            mailUser = raw_input('E-Mail Address: ')
+            givenNameUser = raw_input('Firstname: ')
+            snUser = raw_input('Lastname: ')
+            passwordUser = getpass.getpass('Password: ')
+
+            self.createGroup(uidUser, uidNumberUser)
+            self.createUser(uidUser, mailUser, uidNumberUser, givenNameUser, snUser, passwordUser)
 
         self.ldapConn.unbind_s()
 
