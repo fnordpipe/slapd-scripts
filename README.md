@@ -2,6 +2,7 @@
 
     python2
     python-ldap
+    bcrypt
     docopt
 
 # description

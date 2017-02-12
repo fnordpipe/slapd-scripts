@@ -2,7 +2,8 @@
 
 # Copyright (c) 2017 crito <crito@fnordpipe.org>
 
-"""Usage:   slap.py [-v]
+"""Usage:
+  slap.py <command> [-v]
 
 initialize an empty ldap server
 
@@ -10,6 +11,7 @@ Options:
     -v  Verbose
 
 Example:
+   > slap.py init -v
    URL: ldap://ldap.example.org:389/
    Base DN: dc=example,dc=org
    Username: root
@@ -24,6 +26,8 @@ Example:
 
 """
 
+import bcrypt
+import crypt
 import docopt
 import getpass
 import ldap
@@ -100,6 +104,20 @@ class slappy:
 
         self.add(attrs)
 
+    def createService(self, cn, password):
+        attrs = { 'attrs': {} }
+        attrs['dn'] = 'cn=%s,ou=service,%s' % (cn, self.baseDn)
+        attrs['attrs']['objectclass'] = [
+            'top',
+            'organizationalRole',
+            'shadowAccount'
+        ]
+        attrs['attrs']['cn'] = cn
+        attrs['attrs']['uid'] = cn
+        attrs['attrs']['userPassword'] = '{CRYPT}%s' % (crypt.crypt(password, bcrypt.gensalt()))
+
+        self.add(attrs)
+
     def run(self):
         args = docopt.docopt(__doc__)
 
@@ -107,11 +125,6 @@ class slappy:
         self.baseDn = raw_input('Base DN: ')
         self.username = raw_input('Username: ')
         self.password = getpass.getpass('Password: ')
-        self.dc = raw_input('DC Name: ')
-        self.o = raw_input('Organization: ')
-
-        if args['-v'] == True:
-            self.verbose = True
 
         try:
             ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, '/etc/ssl/certs/ca-certificates.crt')
@@ -120,8 +133,20 @@ class slappy:
         except ldap.LDAPError as e:
             print(e)
 
-        self.createBaseDn()
-        self.createRootUser()
+        if args['-v'] == True:
+            self.verbose = True
+
+        if args['<command>'] == 'init':
+            self.dc = raw_input('DC Name: ')
+            self.o = raw_input('Organization: ')
+
+            self.createBaseDn()
+            self.createRootUser()
+
+        if args['<command>'] == 'service':
+            cnService = raw_input('CN Name: ')
+            passwordService = getpass.getpass('Password: ')
+            self.createService(cnService, passwordService)
 
         self.ldapConn.unbind_s()
 
